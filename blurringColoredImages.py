@@ -4,6 +4,8 @@
 
 '''Imports'''
 import numpy as np
+from PIL import Image
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib.animation import PillowWriter
 
@@ -11,13 +13,14 @@ from matplotlib.animation import PillowWriter
 R, G, B     = [], [], []
 imageData   = []
 rows, cols  = 0,0
-time        = 100
+time        = 50
 
 #Current is the center pixel in an image, the other variables represent the pixels in that direction
 #with respect to the current pixel
 def timeStepUpdate(current, left, right, top, bottom, dt=0.1):
     laplacian = left + right + top + bottom -4*current
-    return current + np.rint(dt*laplacian).astype(int)
+    deltaLap  = dt*laplacian
+    return current + deltaLap.astype(int)
 
 def extract(array, rows, cols):
     return array[1:rows+1,1:cols+1]
@@ -26,9 +29,9 @@ def main():
     global R,G,B, imageData, rows, cols
 
     #File processing
-    fileNames = ["","IronValiant","SmolPikachu","TestPikachu","TestIshigami"]
-    index = 4
-    file = open("TestImages\Grey{}.ppm".format(fileNames[index]),"r")
+    fileNames = ["","IronValiant","SmolPikachu","Pikachu","TestIshigami","BlurredTestPikachu"]
+    index = 3
+    file = open("{}.ppm".format(fileNames[index]),"r")
 
     #Load image data from file
     imageData = [s.replace("\n", '') for s in file.readlines()]
@@ -83,9 +86,9 @@ def main():
 
     t_vals      = []
     image_vals   = []
-    with writer.saving(fig,"BlurringColor{}.gif".format(fileNames[index]),100):
+    with writer.saving(fig,"Blurring{}.gif".format(fileNames[index]),200):
 
-        for t in range(1,time+1):
+        for t in tqdm(range(1, time + 1), desc='Processing image', unit=' still images'):
             t_vals.append(t)
 
             #Convert to 2D arrays and pad
@@ -123,20 +126,25 @@ def main():
             result = result.T
             result = result.reshape(rows,cols,3)
             rows, cols = cols, rows
+            
+            #Reconvert to arrays for next iterations
+            R, G, B = np.ndarray.tolist(R), np.ndarray.tolist(G), np.ndarray.tolist(B)
 
             #Display image
-            plt.imshow(result)
+        
             image_vals.append(result)
             ax.set_title('Blurring {} using heat equation'.format(fileNames[index]),fontsize=18)
             ax.set_xlabel("Time steps: {}".format(t))
-            print("Processing step: {}".format(t))
+            image = plt.imshow(result)
+            
 
-            #Stitching
             writer.grab_frame()
-            plt.cla()
+            # plt.cla()
 
-            #Reconvert to arrays for next iterations
-            R, G, B = np.ndarray.tolist(R), np.ndarray.tolist(G), np.ndarray.tolist(B)
+        print("Saving as a .GIF to file...")
+    
+    print("Done.")
+    
             
 
 

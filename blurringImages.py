@@ -3,12 +3,13 @@
 #19 November 2023
 
 import numpy as np
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib.animation import PillowWriter
 
 #Global variables
 rows, cols          = 0,0
-time                = 500
+time                = 100
 imageData           = []
 
 def main():
@@ -16,7 +17,7 @@ def main():
     #File processing and management
     fileNames = ["Test16","Explosion","Fence","Heh","Ishigami","Pikachu","PowerLines","Shirogane","Tower","Tree"]
     index = 5
-    file = open("TestImages\Grey{}.ppm".format(fileNames[index]),"r")
+    file = open("TestImages/Grey{}.ppm".format(fileNames[index]),"r")
 
     #Load image data from file and remove newline characters
     for line in file.readlines():
@@ -57,7 +58,7 @@ def main():
     image_vals   = []
     with writer.saving(fig,"Blurring{}.gif".format(fileNames[index]),200):
 
-        for t in range(1,time+1):
+        for t in tqdm(range(1, time + 1), desc='Processing image', unit=' still images'):
             t_vals.append(t)
 
             left, right = imageData[1:rows+1,0:cols], imageData[1:rows+1,2:cols+2]
@@ -70,13 +71,15 @@ def main():
             ax.set_xlabel("Time steps: {}".format(t))
             image = plt.imshow(imageData, cmap=plt.cm.gray)
 
-            print("Processed {}".format(t))
+            # print("Processed {}".format(t))
 
             #Stitching
             writer.grab_frame()
             plt.cla()
-   
 
+        print("Saving data as a .GIF to file...")
+    
+    print("Done.")
 #Current is the center pixel in an image, the other variables represent the pixels in that direction
 #with respect to the current pixel
 def timeStepUpdate(current, left, right, top, bottom, dt=0.1):
