@@ -3,8 +3,8 @@
 #20 November 2023
 
 '''Imports'''
+import os
 import numpy as np
-from PIL import Image
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from matplotlib.animation import PillowWriter
@@ -13,7 +13,7 @@ from matplotlib.animation import PillowWriter
 R, G, B     = [], [], []
 imageData   = []
 rows, cols  = 0,0
-time        = 50
+time        = 100
 
 #Current is the center pixel in an image, the other variables represent the pixels in that direction
 #with respect to the current pixel
@@ -86,7 +86,10 @@ def main():
 
     t_vals      = []
     image_vals   = []
-    with writer.saving(fig,"Blurring{}.gif".format(fileNames[index]),200):
+
+    savePath = "BlurredImages/BlurringColor{}.gif".format(fileNames[index])
+    os.makedirs(os.path.dirname(savePath), exist_ok=True)
+    with writer.saving(fig,savePath,150):
 
         for t in tqdm(range(1, time + 1), desc='Processing image', unit=' still images'):
             t_vals.append(t)

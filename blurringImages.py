@@ -2,6 +2,7 @@
 #Caleb Bessit
 #19 November 2023
 
+import os
 import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
@@ -56,8 +57,11 @@ def main():
 
     t_vals      = []
     image_vals   = []
-    with writer.saving(fig,"Blurring{}.gif".format(fileNames[index]),200):
 
+
+    savePath = "BlurredImages/BlurringGrey{}.gif".format(fileNames[index])
+    os.makedirs(os.path.dirname(savePath), exist_ok=True)
+    with writer.saving(fig,savePath,150):
         for t in tqdm(range(1, time + 1), desc='Processing image', unit=' still images'):
             t_vals.append(t)
 
