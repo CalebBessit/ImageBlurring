@@ -80,7 +80,7 @@ def main():
             imageData = timeStepUpdate(imageData, left, right, top, bottom)
 
             image_vals.append(imageData)
-            ax.set_title('Blurring {} using heat equation: Torus boundaries'.format(fileNames[index]),fontsize=18)
+            ax.set_title('Blurring {} using torus boundaries'.format(fileNames[index]),fontsize=18)
             ax.set_xlabel("Time steps: {}".format(t))
             image = plt.imshow(imageData, cmap=plt.cm.gray)
 

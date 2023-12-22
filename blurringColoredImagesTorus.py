@@ -1,0 +1,163 @@
+#Using the heat equation to blur color images
+#Caleb Bessit
+#20 November 2023
+
+'''Imports'''
+import os
+import numpy as np
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+from matplotlib.animation import PillowWriter
+
+'''Global variables'''
+R, G, B     = [], [], []
+imageData   = []
+rows, cols  = 0,0
+time        = 100
+
+#Current is the center pixel in an image, the other variables represent the pixels in that direction
+#with respect to the current pixel
+def timeStepUpdate(current, left, right, top, bottom, dt=0.1):
+    laplacian = left + right + top + bottom -4*current
+    deltaLap  = dt*laplacian
+    return current + deltaLap.astype(int)
+
+#This method returns the array slice in the indicated direction. For pixels on the boundaries, it wraps 
+#around in a virutal torus
+def shift(centerImage, direction,rows,cols):
+    if direction=="left":
+        return np.hstack((centerImage[:,cols-1:cols], centerImage[:,:cols-1]))
+    elif direction =="right":
+        return np.hstack((centerImage[:,1:cols], centerImage[:,0:1])) 
+    elif direction =="top":
+        return np.vstack((centerImage[rows-1:rows,:],centerImage[:rows-1,:])) 
+    elif direction =="bottom":
+        return np.vstack((centerImage[1:rows,:],centerImage[0:1,:])) 
+
+
+def extract(array, rows, cols):
+    return array[1:rows+1,1:cols+1]
+
+def main():
+    global R,G,B, imageData, rows, cols
+
+    #File processing
+    fileNames = ["","IronValiant","SmolPikachu","Pikachu","TestIshigami","BlurredTestPikachu"]
+    index = 3
+    file = open("{}.ppm".format(fileNames[index]),"r")
+
+    #Load image data from file
+    imageData = [s.replace("\n", '') for s in file.readlines()]
+
+    #Close file and extract pixel and heading characters
+    file.close()
+    imageData= imageData[2:]
+    rows, cols = imageData[0].split(" ")
+    rows, cols = int(rows), int(cols)
+
+    imageData = imageData[2:]
+
+    #Convert pixel values to integers
+    imageData = list(map(int, imageData))
+    
+    #Split image data into red, green and blue pixels
+    R, G, B = imageData[::3], imageData[1::3], imageData[2::3]
+
+    #Convert to 2D arrays and pad
+
+    R, G, B = np.array(R).reshape((rows, cols)), np.array(G).reshape((rows, cols)), np.array(B).reshape((rows, cols))
+
+    #Swap rows and columns to extract data logically
+    # rows, cols = cols, rows
+
+    #Display initial image
+    fig, ax = plt.subplots()
+    ax.set_title('Image At 0 Time Steps',fontsize=18)
+
+    #Swap back rows and columns to display correctly
+    rows, cols = cols, rows
+    R, G, B = R.reshape((1,rows*cols))[0], G.reshape((1,rows*cols))[0], B.reshape((1,rows*cols))[0]
+    result = np.vstack(( R, G, B ))
+    result = result.T
+    result = result.reshape(rows,cols,3)
+
+    rows, cols = cols, rows
+
+    #Display image
+    plt.imshow(result)
+    R, G, B = np.ndarray.tolist(R), np.ndarray.tolist(G), np.ndarray.tolist(B)
+    
+
+    
+    metadata    = dict(title="Movie", artist="Caleb")
+    writer      = PillowWriter(fps=15, metadata=metadata)
+
+    t_vals      = []
+    image_vals   = []
+
+    savePath = "BlurredImages/BlurringColor{}Torus.gif".format(fileNames[index])
+    os.makedirs(os.path.dirname(savePath), exist_ok=True)
+    with writer.saving(fig,savePath,150):
+
+        for t in tqdm(range(1, time + 1), desc='Processing image', unit=' still images'):
+            t_vals.append(t)
+
+            #Convert to 2D arrays and pad
+            R, G, B = np.array(R).reshape((rows, cols)), np.array(G).reshape((rows, cols)), np.array(B).reshape((rows, cols))
+        
+            #Perform and return calculations:
+
+            # Processing red pixels
+            leftR, rightR   = shift(R,"left",rows,cols), shift(R,"right",rows,cols)
+            topR, bottomR   = shift(R,"top",rows,cols) , shift(R,"bottom",rows,cols)
+            R               = timeStepUpdate(R, leftR, rightR, topR, bottomR)
+
+            #Processing blue pixels
+            leftB, rightB   = shift(B,"left",rows,cols), shift(B,"right",rows,cols)
+            topB, bottomB   = shift(B,"top",rows,cols) , shift(B,"bottom",rows,cols)
+            B               = timeStepUpdate(B, leftB, rightB, topB, bottomB)
+
+            #Processing green pixels
+            leftG, rightG   = shift(G,"left",rows,cols), shift(G,"right",rows,cols)
+            topG, bottomG   = shift(G,"top",rows,cols) , shift(G,"bottom",rows,cols)
+            G               = timeStepUpdate(G, leftG, rightG, topG, bottomG)
+
+
+            #Swap back rows and columns to display correctly
+            rows, cols = cols, rows
+            R, G, B = R.reshape((1,rows*cols))[0], G.reshape((1,rows*cols))[0], B.reshape((1,rows*cols))[0]
+            result = np.vstack(( R, G, B ))
+            result = result.T
+            result = result.reshape(rows,cols,3)
+            rows, cols = cols, rows
+            
+            #Reconvert to arrays for next iterations
+            R, G, B = np.ndarray.tolist(R), np.ndarray.tolist(G), np.ndarray.tolist(B)
+
+            #Display image
+        
+            image_vals.append(result)
+            ax.set_title('Blurring {} using ttorus boundaries'.format(fileNames[index]),fontsize=18)
+            ax.set_xlabel("Time steps: {}".format(t))
+            image = plt.imshow(result)
+            
+
+            writer.grab_frame()
+            # plt.cla()
+
+        print("Saving as a .GIF to file...")
+    
+    print("Done.")
+    
+            
+
+
+            
+
+
+
+    
+
+
+if __name__=="__main__":
+    main()
